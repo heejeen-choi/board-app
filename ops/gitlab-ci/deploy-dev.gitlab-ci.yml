@@ -1,0 +1,97 @@
+variables:
+  DOCKER_IMAGE_TAG: "gcr.io/$GOOGLE_DEV_PROJECT_ID/$DRAMA"
+  SERVICE_ACCOUNT_HOLDER: "nara-service-account"
+  SERVICE_NAME: "sample"
+  K8S_DIR: "ops/k8s-dev"
+  K8S_NS: "kollection"
+
+default:
+  tags:
+    - drama-docker
+  cache:
+    key: $CI_COMMIT_REF_SLUG
+    paths:
+      - node_modules/
+      - yarn.lock
+      - .next/
+    policy: pull
+
+deploy-dev 1/3:
+  image: node:14
+  stage: deploy
+  cache:
+    key: $CI_COMMIT_REF_SLUG
+    paths:
+      - node_modules/
+      - yarn.lock
+      - .next/
+    policy: push
+  script:
+    - yarn install
+    - yarn build
+  only:
+    - release
+
+
+deploy-dev 2/3:
+  image: docker:20-dind
+  services:
+    - name: docker:20-dind
+      alias: docker
+      command:
+        - "--tls=false"
+  stage: deploy
+  needs:
+    - deploy-dev 1/3
+  script:
+    - export $(xargs < ./$K8S_DIR/.env)
+    - export IMAGE_TAG_HOLDER="${DOCKER_IMAGE_TAG}"/"${SERVICE_NAME}":"${CI_PIPELINE_ID}"
+    - echo "${IMAGE_TAG_HOLDER} docker build."
+    - cp $K8S_DIR/Dockerfile ./
+    - cp $K8S_DIR/.dockerignore ./
+    - docker build -t "${IMAGE_TAG_HOLDER}" .
+    - echo "$GCP_NARA_DEV_KEY" | docker login -u _json_key --password-stdin https://gcr.io
+    - docker push "${IMAGE_TAG_HOLDER}"
+    - docker rmi "${IMAGE_TAG_HOLDER}"
+  only:
+    - release
+
+deploy-dev 3/3:
+  image: google/cloud-sdk
+  stage: deploy
+  needs:
+    - deploy-dev 2/3
+  script:
+    - export $(xargs < ./$K8S_DIR/.env)
+    - export IMAGE_TAG_HOLDER="${DOCKER_IMAGE_TAG}"/"${SERVICE_NAME}":"${CI_PIPELINE_ID}"
+    - export CLOUDSDK_CORE_PROJECT="$GOOGLE_DEV_PROJECT_ID"
+    - echo "${IMAGE_TAG_HOLDER} deploying."
+    - echo "$GCP_NARA_DEV_KEY" > key.json
+    - gcloud auth activate-service-account --key-file key.json
+    - gcloud config set compute/zone $COMPUTE_ZONE
+    - gcloud config set project $GOOGLE_DEV_PROJECT_ID
+    - gcloud container clusters get-credentials nara-nextstep
+    - >
+      sed
+      -e "s#__SERVICE_NAME__#$(echo ${SERVICE_NAME})#g"
+      -e "s#__GROUP_NAME__#$(echo ${GROUP_NAME})#g"
+      -e "s#__URI_PREFIX__#$(echo ${URI_PREFIX})#g"
+      ${K8S_DIR}/service.yml > service.yml
+    - cat service.yml
+    - kubectl apply -f service.yml -n $K8S_NS
+    - >
+      sed
+      -e "s#__SERVICE_NAME__#$(echo ${SERVICE_NAME})#g"
+      -e "s#__GROUP_NAME__#$(echo ${GROUP_NAME})#g"
+      -e "s#__VERSION__#$(echo ${VERSION})#g"
+      -e "s#__SERVICE_ACCOUNT_HOLDER__#$(echo ${SERVICE_ACCOUNT_HOLDER})#g"
+      -e "s#__IMAGE_TAG_HOLDER__#$(echo ${IMAGE_TAG_HOLDER})#g"
+      ${K8S_DIR}/deploy.yml > deploy.yml
+    - cat deploy.yml
+    - kubectl apply -f deploy.yml --record -n $K8S_NS
+  artifacts:
+    paths:
+      - service.yml
+      - deploy.yml
+  only:
+    - release

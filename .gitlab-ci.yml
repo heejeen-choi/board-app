@@ -1,0 +1,23 @@
+include:
+  - local: ops/gitlab-ci/deploy-dev.gitlab-ci.yml
+
+default:
+  tags:
+    - drama-docker
+
+stages:
+  - unittest
+  - deploy
+
+unittest:
+  stage: unittest
+  image: node:14
+  script:
+    - echo "Unit Test Start..."
+    - yarn install
+    - yarn build
+    - echo "Unit Test End..."
+  rules:
+    - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
+
+# deploy stage must be defined by external gitlab-ci script in ./gitlab-ci/* and include it

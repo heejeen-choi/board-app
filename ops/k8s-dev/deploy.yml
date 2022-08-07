@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: __SERVICE_NAME__
+  labels:
+    app: __SERVICE_NAME__
+    group: __GROUP_NAME__
+    version: __VERSION__
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: __SERVICE_NAME__
+      group: __GROUP_NAME__
+      version: __VERSION__
+  template:
+    metadata:
+      labels:
+        app: __SERVICE_NAME__
+        group: __GROUP_NAME__
+        version: __VERSION__
+      annotations:
+        sidecar.istio.io/inject: "true"
+    spec:
+      serviceAccountName: __SERVICE_ACCOUNT_HOLDER__
+      containers:
+        - name: __SERVICE_NAME__
+          image: __IMAGE_TAG_HOLDER__
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 80
+
