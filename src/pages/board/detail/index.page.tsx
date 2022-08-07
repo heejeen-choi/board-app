@@ -1,4 +1,4 @@
-import {DefaultPageProps, BoardList, BOARD_LIST} from '~/comp';
+import {DefaultPageProps, BoardList, BOARD_LIST, BoardDetail} from '~/comp';
 import {useEffect} from "react";
 
 
@@ -21,15 +21,11 @@ export default function MainPage() {
         console.log('[LOGER]', BOARD_LIST)
     })
 
-    const onClickBoard = (e: React.MouseEvent, boardId: string): void => {
-        // e.stopPropagation();
-        alert(`Hello ${boardId}`)
-    }
 
   return (
     <div>
-      <h1>list pages</h1>
-      <BoardList onClickBoard={onClickBoard}/>
+      <h1>detail pages</h1>
+        <BoardDetail boardId={'5'}/>
     </div>
   );
 }

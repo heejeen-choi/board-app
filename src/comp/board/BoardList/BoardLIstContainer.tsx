@@ -1,22 +1,35 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {Board} from '../domain'
 import {Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow} from "@mui/material";
 import Comment from "../domain/Comment";
 import dayjs from "dayjs";
+import {BOARD_LIST} from "~/comp";
 
 interface Props {
-    boards: Board[]
+    onClickBoard?: (e: React.MouseEvent, boardId: string) => void;
 }
 
 const BoardListContainer = (props: Props) => {
 
-    const {boards} = props;
+    const {onClickBoard} = props;
 
+    const [boards, setBoards] = useState<Board[]>([]);
 
+    useEffect(() => {
+        //request to backend for get board
+        setBoards(BOARD_LIST);
+    }, []);
+
+    const _onClickBoard = (e: React.MouseEvent, boardId: string) => {
+        console.log('LOGER....', boardId)
+        if (onClickBoard) {
+            onClickBoard(e, boardId);
+        }
+    }
 
     return (
         <TableContainer component={Paper}>
-            <Table sx={{ minWidth: 650 }} aria-label="simple table">
+            <Table sx={{ minWidth: 650 }} aria-label="simple table" onClick={() => alert('table click...')}>
                 <TableHead>
                     <TableRow>
                         <TableCell>id</TableCell>
@@ -29,9 +42,7 @@ const BoardListContainer = (props: Props) => {
                 <TableBody>
                     {boards.map((board) => (
                         <TableRow
-                            onClick={()=>{
-                                console.log(board.id)
-                            }}
+                            onClick={e => _onClickBoard(e, board.id)}
                             key={board.id}
                             sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                         >
