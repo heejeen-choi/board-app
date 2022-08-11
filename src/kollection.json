@@ -1,0 +1,25 @@
+{
+  "kollection": {
+    "name": "sample",
+    "kollectionRoles": {
+      "Member": {
+        "code": "mem",
+        "name": "Member",
+        "description": "Member as default role",
+        "defaultRole": true
+      },
+      "ProjectManager": {
+        "code": "pm",
+        "name": "ProjectManager",
+        "description": "Project Manager",
+        "defaultRole": false
+      },
+      "Admin": {
+        "code": "adm",
+        "name": "Admin",
+        "description": "Admin",
+        "defaultRole": false
+      }
+    }
+  }
+}

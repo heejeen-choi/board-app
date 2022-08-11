@@ -1,0 +1,13 @@
+# eslint
+.eslintrc
+
+# dist
+dist
+
+# etc
+node_modules
+.storybook
+.idea
+
+# server
+/server

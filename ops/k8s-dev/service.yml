@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: __SERVICE_NAME__
+  labels:
+    app: __SERVICE_NAME__
+    service: __SERVICE_NAME__
+    group: __GROUP_NAME__
+spec:
+  ports:
+  - name: http
+    port: 80
+  selector:
+    app: __SERVICE_NAME__
+    group: __GROUP_NAME__
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: __SERVICE_NAME__
+spec:
+  hosts:
+    - "*"
+  gateways:
+    - nara-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /__URI_PREFIX__/
+        - uri:
+            prefix: /__URI_PREFIX__
+      route:
+        - destination:
+            host: __URI_PREFIX__
+            port:
+              number: 80
